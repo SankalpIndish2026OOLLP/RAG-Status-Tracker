@@ -145,9 +145,10 @@ export default function PMUpdatePage() {
     setDeliverables(prev => prev.filter((_, idx) => idx !== i));
   }
 
-  function addAttrition() {
-    setAttrition(prev => [...prev, { engineerName: '', billable: true, keyPlayer:false, actionTaken: '' }]);
+function addAttrition() {
+    setAttrition(prev => [...prev, { engineerName: '', informedToClient: false, billable: true, keyPlayer: false, actionTaken: '', comments: '' }]);
   }
+  
   function updateAttrition(i, field, val) {
     setAttrition(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: val } : a));
   }
@@ -305,34 +306,43 @@ export default function PMUpdatePage() {
             <div className="form-group">
               <label>Attrition / Team Changes</label>
                 
-              {/* 1. This new block adds the labels above the inputs */}
+              {/* 1. Updated grid template columns and headers */}
             {attrition.length > 0 && (
-              <div className="desktop-headers" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 2fr auto', gap: 8, marginBottom: 6 }}>
-                {['Engineer Name', 'Billable', 'Key Resource', 'Action Taken', ''].map((h, i) => (
+              <div className="desktop-headers" style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1fr 1fr 2fr 2fr auto', gap: 8, marginBottom: 6 }}>
+                {['Engineer Name', 'Client Informed', 'Billable', 'Key Resource', 'Action Taken', 'Comments', ''].map((h, i) => (
                   <small key={i} style={{ color: 'var(--text-muted)' }}>{h}</small>
                 ))}
               </div>
             )}
 
               {attrition.map((a, i) => (
-                <div key={i} className="dynamic-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 2fr auto', gap: 8, marginBottom: 8 }}>
+                <div key={i} className="dynamic-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1fr 1fr 2fr 2fr auto', gap: 8, marginBottom: 8 }}>
                   <input type="text" value={a.engineerName} onChange={e => updateAttrition(i,'engineerName',e.target.value)} placeholder="Engineer name" style={{ padding:'8px 10px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)',fontFamily:'inherit' }} />
                   
-                <select value={a.billable?'Yes':'No'} onChange={e => updateAttrition(i,'billable',e.target.value==='Yes')} style={{ padding:'8px 6px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)' }}>
-                  <option>Yes</option><option>No</option>
-                </select>
+                  {/* NEW: Client Informed Dropdown */}
+                  <select value={a.informedToClient ? 'Yes' : 'No'} onChange={e => updateAttrition(i,'informedToClient',e.target.value==='Yes')} style={{ padding:'8px 6px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)' }}>
+                    <option>Yes</option><option>No</option>
+                  </select>
+
+                  <select value={a.billable?'Yes':'No'} onChange={e => updateAttrition(i,'billable',e.target.value==='Yes')} style={{ padding:'8px 6px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)' }}>
+                    <option>Yes</option><option>No</option>
+                  </select>
                   
-                <select value={a.keyPlayer?'Yes':'No'} onChange={e => updateAttrition(i,'keyPlayer',e.target.value==='Yes')} style={{ padding:'8px 6px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)' }}>
-                  <option>Yes</option><option>No</option>
-                </select>
+                  <select value={a.keyPlayer?'Yes':'No'} onChange={e => updateAttrition(i,'keyPlayer',e.target.value==='Yes')} style={{ padding:'8px 6px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)' }}>
+                    <option>Yes</option><option>No</option>
+                  </select>
                   
                   <input type="text" value={a.actionTaken} onChange={e => updateAttrition(i,'actionTaken',e.target.value)} placeholder="Action taken" style={{ padding:'8px 10px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)',fontFamily:'inherit' }} />
+                  
+                  {/* NEW: Comments Input */}
+                  <input type="text" value={a.comments || ''} onChange={e => updateAttrition(i,'comments',e.target.value)} placeholder="Comments..." style={{ padding:'8px 10px',fontSize:12,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)',fontFamily:'inherit' }} />
+
                   <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirmDelete({ type: 'attrition', index: i })}>✕</button>
                 </div>
               ))}
               <button type="button" className="add-row-btn" onClick={addAttrition}>+ Add entry</button>
             </div>
-
+            
             {/* Customer Escalations */}
             <div className="form-group">
               <label >Customer Escalations</label>

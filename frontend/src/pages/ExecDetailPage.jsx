@@ -106,18 +106,22 @@ export default function ExecDetailPage() {
                   <thead>
                     <tr>
                       <th>Engineer</th>
+                      <th>Client Informed</th>
                       <th>Billable</th>
                       <th>Key Resource</th>
                       <th>Action Taken</th>
+                      <th>Comments</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.attrition.map((a, i) => (
                       <tr key={i}>
                         <td>{a.engineerName}</td>
+                        <td>{a.informedToClient ? '✓ Yes' : '✗ No'}</td>
                         <td>{a.billable ? 'Yes' : 'No'}</td>
                         <td>{a.keyPlayer ? '✓ Yes' : '✗ No'}</td>
                         <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{a.actionTaken || '—'}</td>
+                        <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{a.comments || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
