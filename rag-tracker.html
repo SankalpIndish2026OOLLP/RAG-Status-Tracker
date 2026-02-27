@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Project Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --accent: #f0b429;
+    --red: #da3633;
+    --amber: #d29922;
+    --green: #3fb950;
+    --red-bg: rgba(218,54,51,0.12);
+    --amber-bg: rgba(210,153,34,0.12);
+    --green-bg: rgba(63,185,80,0.12);
+    --blue: #58a6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ---- Auth Screen ---- */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 20% 50%, rgba(240,180,41,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(88,166,255,0.06) 0%, transparent 50%),
+                var(--bg);
+  }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px;
+    width: 420px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.4);
+  }
+  .auth-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .auth-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 36px; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 6px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+    border-radius: 8px; border: none; cursor: pointer; font-family: inherit; font-size: 14px;
+    font-weight: 500; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: #0d1117; }
+  .btn-primary:hover { background: #f5c73e; }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(218,54,51,0.3); }
+  .btn-danger:hover { background: rgba(218,54,51,0.2); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-full { width: 100%; justify-content: center; }
+  .auth-demo { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .auth-demo p { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  .demo-user-btn {
+    display: block; width: 100%; margin-bottom: 8px; padding: 8px 12px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-family: inherit; font-size: 12px; cursor: pointer;
+    text-align: left; transition: border-color 0.2s;
+  }
+  .demo-user-btn:hover { border-color: var(--accent); }
+  .demo-user-btn span { color: var(--text-muted); margin-left: 6px; }
+  .error-msg { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+  /* ---- App Layout ---- */
+  #app { display: none; min-height: 100vh; }
+  .topbar {
+    height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 16px; position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--accent); margin-right: auto; }
+  .user-badge {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    background: var(--surface2); border-radius: 20px; font-size: 13px;
+  }
+  .role-chip {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 2px 7px; border-radius: 10px;
+  }
+  .role-admin { background: rgba(240,180,41,0.2); color: var(--accent); }
+  .role-pm { background: rgba(88,166,255,0.2); color: var(--blue); }
+  .role-exec { background: rgba(63,185,80,0.2); color: var(--green); }
+
+  .layout { display: flex; height: calc(100vh - 56px); }
+  .sidebar {
+    width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 20px 0; flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+    color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--text); background: var(--surface2); border-left-color: var(--accent); }
+  .nav-icon { font-size: 16px; }
+  .nav-section { padding: 16px 20px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+
+  .main { flex: 1; overflow-y: auto; padding: 32px; }
+
+  /* ---- Panels ---- */
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 6px; }
+  .panel-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+
+  /* ---- Dashboard ---- */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+  }
+  .stat-value { font-size: 32px; font-weight: 600; line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .stat-red .stat-value { color: var(--red); }
+  .stat-amber .stat-value { color: var(--amber); }
+  .stat-green .stat-value { color: var(--green); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+
+  .project-table { width: 100%; border-collapse: collapse; }
+  .project-table th {
+    text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .project-table td { padding: 12px 12px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .project-table tr:last-child td { border-bottom: none; }
+  .project-table tr:hover td { background: var(--surface2); }
+
+  .rag-badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+    border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .rag-Red { background: var(--red-bg); color: var(--red); }
+  .rag-Amber { background: var(--amber-bg); color: var(--amber); }
+  .rag-Green { background: var(--green-bg); color: var(--green); }
+  .rag-NA { background: var(--surface2); color: var(--text-muted); }
+  .rag-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .rag-Red .rag-dot { background: var(--red); }
+  .rag-Amber .rag-dot { background: var(--amber); }
+  .rag-Green .rag-dot { background: var(--green); }
+
+  /* ---- Form Panel ---- */
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+  }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  .rag-selector { display: flex; gap: 8px; }
+  .rag-option {
+    flex: 1; padding: 10px; border-radius: 8px; cursor: pointer; text-align: center;
+    font-size: 13px; font-weight: 600; border: 2px solid transparent; transition: all 0.15s;
+  }
+  .rag-option[data-val="Red"] { background: var(--red-bg); color: var(--red); }
+  .rag-option[data-val="Red"].selected { border-color: var(--red); }
+  .rag-option[data-val="Amber"] { background: var(--amber-bg); color: var(--amber); }
+  .rag-option[data-val="Amber"].selected { border-color: var(--amber); }
+  .rag-option[data-val="Green"] { background: var(--green-bg); color: var(--green); }
+  .rag-option[data-val="Green"].selected { border-color: var(--green); }
+
+  .deliverable-row { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .deliverable-row input, .deliverable-row select { padding: 8px 10px; font-size: 12px; }
+  .add-row-btn { font-size: 12px; color: var(--blue); cursor: pointer; background: none; border: none; padding: 4px 0; font-family: inherit; }
+  .add-row-btn:hover { text-decoration: underline; }
+
+  /* ---- Admin Panel ---- */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface2); border-radius: 8px; padding: 4px; width: fit-content; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-muted); transition: all 0.15s; }
+  .tab.active { background: var(--surface); color: var(--text); }
+
+  .user-list-item {
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+    background: var(--surface2); border-radius: 8px; margin-bottom: 8px;
+  }
+  .user-list-item .name { font-size: 14px; font-weight: 500; }
+  .user-list-item .email { font-size: 12px; color: var(--text-muted); }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 32px; width: 480px; max-width: 90vw;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+  }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  .history-entry {
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 100px 80px 1fr; gap: 12px; align-items: start;
+  }
+  .history-entry:last-child { border-bottom: none; }
+  .history-date { font-size: 12px; color: var(--text-muted); }
+  .history-reason { font-size: 12px; color: var(--text-muted); }
+
+  .email-preview {
+    background: #fff; border-radius: 8px; padding: 24px; color: #333;
+    font-family: -apple-system, sans-serif; margin-top: 12px;
+  }
+  .email-preview h2 { color: #111; margin-bottom: 16px; }
+  .email-project-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-Red { background: #da3633; }
+  .dot-Amber { background: #d29922; }
+  .dot-Green { background: #3fb950; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 20px; font-size: 13px; z-index: 300;
+    transform: translateY(100px); opacity: 0; transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--green); }
+  .toast.info { border-color: var(--blue); }
+
+  select option { background: var(--bg); }
+  .badge-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--red); color: #fff; font-size: 10px; font-weight: 700;
+    width: 18px; height: 18px; border-radius: 9px; margin-left: auto;
+  }
+
+  .week-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .week-label { font-size: 13px; color: var(--text-muted); }
+
+  .reminder-card {
+    background: rgba(240,180,41,0.08); border: 1px solid rgba(240,180,41,0.25); border-radius: 10px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+  }
+  .reminder-icon { font-size: 24px; }
+  .reminder-text { font-size: 13px; }
+  .reminder-text strong { color: var(--accent); }
+
+  .trend-bar-wrap { display: flex; gap: 3px; align-items: flex-end; height: 20px; }
+  .trend-bar { width: 6px; border-radius: 2px; }
+
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">⬡ RAG Tracker</div>
+    <div class="auth-subtitle">Project Health Monitoring Platform</div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="login-email" placeholder="you@company.com" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" />
+    </div>
+    <p class="error-msg" id="login-error">Invalid credentials. Please try again.</p>
+    <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="doLogin()">Sign In</button>
+    <div class="auth-demo">
+      <p>Demo accounts — click to auto-fill:</p>
+      <button class="demo-user-btn" onclick="fillDemo('admin@ee.com','admin123')">🔧 Admin <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d9b8bdb4b0b799bcbcf7bab6b4">[email&#160;protected]</a></span></button>
+      <button class="demo-user-btn" onclick="fillDemo('jasmine@ee.com','pm123')">👤 PM — Jasmine Hakim <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6903081a0400070c290c0c470a0604">[email&#160;protected]</a></span></button>
+      <button class="demo-user-btn" onclick="fillDemo('hina@ee.com','pm123')">👤 PM — Hina Mundhwa <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="771f1e19163712125914181a">[email&#160;protected]</a></span></button>
+      <button class="demo-user-btn" onclick="fillDemo('ronnit@ee.com','pm123')">👤 PM — Ronnit Samuel <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="45372a2b2b2c310520206b262a28">[email&#160;protected]</a></span></button>
+      <button class="demo-user-btn" onclick="fillDemo('exec@ee.com','exec123')">👔 Executive <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="03667b66604366662d606c6e">[email&#160;protected]</a></span></button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">⬡ RAG Tracker</div>
+    <div class="user-badge">
+      <span id="topbar-name">-</span>
+      <span class="role-chip" id="topbar-role-chip">-</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
+  </div>
+  <div class="layout">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main" id="main-content"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <div class="modal-title" id="modal-project-title">Add Project</div>
+    <div class="form-group">
+      <label>Project Name</label>
+      <input type="text" id="mp-name" placeholder="e.g. ViewOnIT Phase 2" />
+    </div>
+    <div class="form-group">
+      <label>Assigned PM</label>
+      <select id="mp-pm"></select>
+    </div>
+    <div class="form-group">
+      <label>Client / Customer</label>
+      <input type="text" id="mp-client" placeholder="e.g. ACSI Group" />
+    </div>
+    <div class="form-group">
+      <label>Project Type</label>
+      <select id="mp-type">
+        <option>T &amp; Material</option>
+        <option>Fixed Price</option>
+        <option>Retainer</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-project')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <div class="modal-title" id="modal-user-title">Add User</div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="mu-name" placeholder="Jane Smith" />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="text" id="mu-email" placeholder="jane@company.com" />
+    </div>
+    <div class="form-group">
+      <label>Password <span id="mu-pass-hint" style="font-size:10px;color:var(--text-muted);text-transform:none;letter-spacing:0">(leave blank to keep current)</span></label>
+      <input type="password" id="mu-pass" placeholder="Set a password" />
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="mu-role">
+        <option value="pm">Project Manager</option>
+        <option value="exec">Executive</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">Save User</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-email-preview">
+  <div class="modal" style="width:600px">
+    <div class="modal-title">📧 Email Preview — Weekly Dashboard</div>
+    <div id="email-preview-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-email-preview')">Close</button>
+      <button class="btn btn-primary" onclick="sendDashboard()">Send to Executives</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ===================== DATA STORE =====================
+const DB = {
+  users: [
+    { id:'u1', name:'Admin', email:'admin@ee.com', pass:'admin123', role:'admin' },
+    { id:'u2', name:'Jasmine Hakim', email:'jasmine@ee.com', pass:'pm123', role:'pm' },
+    { id:'u3', name:'Hina Mundhwa', email:'hina@ee.com', pass:'pm123', role:'pm' },
+    { id:'u4', name:'Ronnit Samuel', email:'ronnit@ee.com', pass:'pm123', role:'pm' },
+    { id:'u5', name:'Karan Mehta', email:'karan@ee.com', pass:'pm123', role:'pm' },
+    { id:'u6', name:'Executive', email:'exec@ee.com', pass:'exec123', role:'exec' },
+  ],
+  projects: [
+    { id:'p1', name:'SBQ-Odoo Integration', pm:'u2', client:'SBQ', type:'T & Material' },
+    { id:'p2', name:'Weloka', pm:'u2', client:'Weloka BV', type:'T & Material' },
+    { id:'p3', name:'EE_DirectWonen', pm:'u3', client:'DirectWonen', type:'T & Material' },
+    { id:'p4', name:'ACSI_DevOps', pm:'u3', client:'ACSI Group', type:'Fixed Price' },
+    { id:'p5', name:'viewonIT', pm:'u4', client:'ViewOnIT', type:'T & Material' },
+    { id:'p6', name:'easy2coach', pm:'u4', client:'Easy2Coach', type:'Retainer' },
+    { id:'p7', name:'ACSI_Wordpress', pm:'u5', client:'ACSI Group', type:'T & Material' },
+    { id:'p8', name:'Meininger', pm:'u5', client:'Meininger Hotels', type:'Fixed Price' },
+    { id:'p9', name:'BAS', pm:'u2', client:'BAS Group', type:'T & Material' },
+    { id:'p10', name:'EE - MediaArtists', pm:'u3', client:'MediaArtists', type:'Retainer' },
+  ],
+  // weeklyReports: { projectId: { 'YYYY-WW': { rag, reason, path_to_green, deliverables[] } } }
+  reports: {
+    p1: { '2026-06': { rag:'Red', prev:'Red', reason:'No dev work due to developer on client project. Timeline impacted.', path:'Onboard intern under Umesh guidance after training.', deliverables:[ { task:'Odoo Integration Module', owner:'Dev Team', eta:'2026-03-15', status:'Delayed', reason:'Resource constraint' } ], team_size:'2 Dev + 1 QA', attrition:[], escalations:[] } },
+    p2: { '2026-06': { rag:'Red', prev:'Amber', reason:'Client requested to downscale team after 20th Feb. Only 2 weeks backlog remaining.', path:'Karan to get in touch with client for direction.', deliverables:[ { task:'UI Revamp', owner:'Ankit', eta:'2026-02-20', status:'On Track', reason:'' } ], team_size:'1 Dev', attrition:[], escalations:[] } },
+    p3: { '2026-06': { rag:'Amber', prev:'Amber', reason:'Feedback from client — previous task not as expected. Ongoing task delayed 1 day.', path:'Delay informed to client. Review next Monday.', deliverables:[ { task:'Feature A', owner:'Dev 1', eta:'2026-02-14', status:'Delayed', reason:'Client feedback rework' } ], team_size:'2 Dev + 1 BA', attrition:[], escalations:[] } },
+    p4: { '2026-06': { rag:'Red', prev:'Red', reason:'Candidate selected but client has doubts. Under close monitoring.', path:'Onboard ASAP and monitor first 30 days.', deliverables:[], team_size:'1 DevOps', attrition:[], escalations:[] } },
+    p5: { '2026-06': { rag:'Green', prev:'Green', reason:'', path:'', deliverables:[ { task:'Configure Flow Rules', owner:'Ankit Singh', eta:'2026-01-30', status:'Completed', reason:'' }, { task:'Email Notifications for Flow Rules', owner:'Ankit Singh', eta:'2026-02-04', status:'Completed', reason:'' }, { task:'Invoice Download Feature', owner:'Ankit Singh', eta:'2026-02-09', status:'On Track', reason:'' } ], team_size:'1 Dev + 1 QA', attrition:[], escalations:[] } },
+    p6: { '2026-06': { rag:'Green', prev:'Green', reason:'', path:'', deliverables:[], team_size:'1 Dev', attrition:[], escalations:[] } },
+    p7: { '2026-06': { rag:'Amber', prev:'Green', reason:'Content migration behind schedule.', path:'Allocate dedicated resource for 2 weeks.', deliverables:[], team_size:'1 Dev + 1 BA', attrition:[], escalations:[] } },
+    p8: { '2026-06': { rag:'Green', prev:'Amber', reason:'', path:'', deliverables:[], team_size:'2 Dev', attrition:[], escalations:[] } },
+    p9: { '2026-06': { rag:'Amber', prev:'Amber', reason:'Integration testing delays.', path:'Extra sprint planned.', deliverables:[], team_size:'2 Dev + 1 QA', attrition:[], escalations:[] } },
+    p10: { '2026-06': { rag:'Green', prev:'Green', reason:'', path:'', deliverables:[], team_size:'1 Dev', attrition:[], escalations:[] } },
+  },
+  execEmails: ['exec@ee.com', 'ceo@ee.com'],
+};
+
+// ===================== STATE =====================
+let currentUser = null;
+let currentWeek = '2026-06';
+let editingProjectId = null;
+let editingUserId = null;
+let adminTab = 'projects';
+
+// ===================== AUTH =====================
+function fillDemo(e, p) {
+  document.getElementById('login-email').value = e;
+  document.getElementById('login-pass').value = p;
+}
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const user = DB.users.find(u => u.email === email && u.pass === pass);
+  const errEl = document.getElementById('login-error');
+  if (!user) { errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  currentUser = user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('topbar-name').textContent = user.name;
+  const chip = document.getElementById('topbar-role-chip');
+  chip.textContent = user.role;
+  chip.className = 'role-chip role-' + user.role;
+  buildNav();
+  showPanel(user.role === 'admin' ? 'admin-panel' : 'dashboard');
+}
+function doLogout() {
+  currentUser = null;
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+// ===================== NAV =====================
+function buildNav() {
+  const r = currentUser.role;
+  let html = '';
+  if (r === 'pm') {
+    html += `<div class="nav-section">My Work</div>`;
+    html += navItem('dashboard','📊','Dashboard','dashboard');
+    html += navItem('pm-update','✏️','Update Status','pm-update');
+    html += navItem('pm-history','📅','History','pm-history');
+  } else if (r === 'exec') {
+    html += `<div class="nav-section">Executive View</div>`;
+    html += navItem('dashboard','📊','Portfolio Summary','dashboard');
+    html += navItem('exec-detail','🔍','Project Details','exec-detail');
+  } else if (r === 'admin') {
+    html += `<div class="nav-section">Admin</div>`;
+    html += navItem('admin-panel','⚙️','Projects','admin-panel');
+    html += navItem('admin-users','👥','Users & Access','admin-users');
+    html += navItem('admin-comms','📧','Communications','admin-comms');
+  }
+  document.getElementById('sidebar').innerHTML = html;
+}
+function navItem(panel, icon, label, panelId) {
+  const redCount = redProjects().length;
+  const badge = (panel === 'dashboard' && redCount > 0 && currentUser.role !== 'pm') ? `<span class="badge-count">${redCount}</span>` : '';
+  return `<div class="nav-item" id="nav-${panelId}" onclick="showPanel('${panelId}')">${icon} <span>${label}</span>${badge}</div>`;
+}
+
+function showPanel(id) {
+  // Admin cannot access the dashboard or project status views
+  if (currentUser.role === 'admin' && (id === 'dashboard' || id === 'exec-detail' || id === 'pm-update' || id === 'pm-history')) {
+    id = 'admin-panel';
+  }
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+  const content = buildPanel(id);
+  document.getElementById('main-content').innerHTML = content;
+  afterPanelBuild(id);
+}
+
+// ===================== HELPERS =====================
+function getWeekProjects() {
+  let projects = DB.projects.filter(p => !p.closed);
+  if (currentUser.role === 'pm') {
+    projects = projects.filter(p => p.pm === currentUser.id);
+  }
+  return projects.map(p => {
+    const report = (DB.reports[p.id] || {})[currentWeek] || {};
+    const pm = DB.users.find(u => u.id === p.pm);
+    return { ...p, ...report, pmName: pm ? pm.name : '-', rag: report.rag || 'NA', prev: report.prev || 'NA' };
+  });
+}
+function redProjects() { return getWeekProjects().filter(p => p.rag === 'Red'); }
+function ambProjects() { return getWeekProjects().filter(p => p.rag === 'Amber'); }
+function greenProjects() { return getWeekProjects().filter(p => p.rag === 'Green'); }
+function ragBadge(rag) {
+  return `<span class="rag-badge rag-${rag}"><span class="rag-dot"></span>${rag}</span>`;
+}
+function trendArrow(cur, prev) {
+  if (cur === prev) return '<span style="color:var(--text-muted)">→</span>';
+  const ord = { Green:3, Amber:2, Red:1, NA:0 };
+  if (ord[cur] > ord[prev]) return '<span style="color:var(--green)">↑</span>';
+  return '<span style="color:var(--red)">↓</span>';
+}
+
+// ===================== DASHBOARD =====================
+function buildDashboard() {
+  const projects = getWeekProjects();
+  const reds = projects.filter(p => p.rag==='Red').length;
+  const ambs = projects.filter(p => p.rag==='Amber').length;
+  const grns = projects.filter(p => p.rag==='Green').length;
+  const total = projects.length;
+  const unfilled = projects.filter(p => p.rag === 'NA').length;
+
+  let rows = projects.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td>${currentUser.role !== 'pm' ? p.pmName : p.client}</td>
+      <td>${ragBadge(p.prev)}</td>
+      <td>${ragBadge(p.rag)} ${trendArrow(p.rag, p.prev)}</td>
+      <td style="max-width:280px;font-size:12px;color:var(--text-muted)">${p.reason || '<span style="color:var(--green)">On track</span>'}</td>
+      ${currentUser.role !== 'pm'
+        ? `<td><button class="btn btn-ghost btn-sm" onclick="gotoProjectDetail('${p.id}')">View</button></td>`
+        : `<td><button class="btn btn-ghost btn-sm" onclick="gotoPMUpdate('${p.id}')">Update</button></td>`
+      }
+    </tr>
+  `).join('');
+
+  const reminderHtml = currentUser.role === 'pm' && unfilled > 0 ? `
+    <div class="reminder-card">
+      <div class="reminder-icon">🔔</div>
+      <div class="reminder-text">You have <strong>${unfilled} project${unfilled>1?'s':''}</strong> without a status update this week. Please update before Friday.</div>
+    </div>` : '';
+
+  return `
+    <div class="panel-title">Project Health Dashboard</div>
+    <div class="panel-sub">Week of Feb 10, 2026 &nbsp;·&nbsp; ${total} active projects</div>
+    ${reminderHtml}
+    <div class="stats-row">
+      <div class="stat-card stat-red"><div class="stat-value">${reds}</div><div class="stat-label">🔴 Red</div></div>
+      <div class="stat-card stat-amber"><div class="stat-value">${ambs}</div><div class="stat-label">🟡 Amber</div></div>
+      <div class="stat-card stat-green"><div class="stat-value">${grns}</div><div class="stat-label">🟢 Green</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--text-muted)">${unfilled}</div><div class="stat-label">⬜ Pending Update</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">All Projects — Current Week</div>
+      <table class="project-table">
+        <thead><tr>
+          <th>Project</th>
+          <th>${currentUser.role !== 'pm' ? 'PM' : 'Client'}</th>
+          <th>T-1 Week</th>
+          <th>This Week</th>
+          <th>Reason / Notes</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ===================== PM UPDATE PANEL =====================
+function buildPMUpdate() {
+  const myProjects = DB.projects.filter(p => p.pm === currentUser.id);
+  let opts = myProjects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+  return `
+    <div class="panel-title">Update Project Status</div>
+    <div class="panel-sub">Submit weekly RAG status for your projects</div>
+    <div class="card">
+      <div class="form-group">
+        <label>Select Project</label>
+        <select id="update-project-select" onchange="renderUpdateForm(this.value)">
+          <option value="">— Choose a project —</option>
+          ${opts}
+        </select>
+      </div>
+      <div id="update-form-body"></div>
+    </div>`;
+}
+
+function prefillUpdate(pid) {
+  const sel = document.getElementById('update-project-select');
+  if (sel) { sel.value = pid; renderUpdateForm(pid); }
+}
+
+function renderUpdateForm(pid) {
+  if (!pid) { document.getElementById('update-form-body').innerHTML = ''; return; }
+  const existing = (DB.reports[pid] || {})[currentWeek] || {};
+  const delivs = (existing.deliverables || []).map((d,i) => delivRow(d, i)).join('');
+  const attrition = (existing.attrition || []).map((a,i) => attrRow(a,i)).join('');
+
+  document.getElementById('update-form-body').innerHTML = `
+    <hr style="border-color:var(--border);margin:20px 0">
+    <div class="form-group">
+      <label>RAG Status — This Week</label>
+      <div class="rag-selector">
+        ${['Red','Amber','Green'].map(r => `<div class="rag-option ${existing.rag===r?'selected':''}" data-val="${r}" onclick="selectRAG(this)">${r}</div>`).join('')}
+      </div>
+      <input type="hidden" id="update-rag" value="${existing.rag || ''}">
+    </div>
+    <div id="reason-block" style="${existing.rag && existing.rag!=='Green'?'':'display:none'}">
+      <div class="form-group">
+        <label>Reason for ${existing.rag || 'Red/Amber'}</label>
+        <textarea id="update-reason" placeholder="Describe the issue...">${existing.reason||''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Path to Green</label>
+        <textarea id="update-path" placeholder="What actions will resolve this?">${existing.path||''}</textarea>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Team Size</label>
+      <input type="text" id="update-team-size" value="${existing.team_size||''}" placeholder="e.g. 2 Dev + 1 QA" />
+    </div>
+    <div class="form-group">
+      <label>Deliverables / Tasks</label>
+      <div style="display:grid;grid-template-columns:1fr 2fr 1fr 1fr 1fr;gap:8px;margin-bottom:6px">
+        <small style="color:var(--text-muted)">Type</small>
+        <small style="color:var(--text-muted)">Task Details</small>
+        <small style="color:var(--text-muted)">Owner</small>
+        <small style="color:var(--text-muted)">ETA</small>
+        <small style="color:var(--text-muted)">Status</small>
+      </div>
+      <div id="deliverables-list">${delivs}</div>
+      <button class="add-row-btn" onclick="addDeliverableRow()">+ Add task</button>
+    </div>
+    <div class="form-group">
+      <label>Attrition / Team Changes</label>
+      <div id="attrition-list">${attrition}</div>
+      <button class="add-row-btn" onclick="addAttritionRow()">+ Add entry</button>
+    </div>
+    <button class="btn btn-primary" onclick="submitUpdate('${pid}')">💾 Save Update</button>
+  `;
+}
+
+function delivRow(d = {}, i = Date.now()) {
+  return `<div class="deliverable-row" id="dr-${i}">
+    <select style="padding:8px 6px;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+      <option ${d.type==='Story'?'selected':''}>Story</option>
+      <option ${d.type==='Hotfix'?'selected':''}>Hotfix</option>
+      <option ${d.type==='Bug'?'selected':''}>Bug</option>
+      <option ${d.type==='Task'?'selected':''}>Task</option>
+    </select>
+    <input type="text" value="${d.task||''}" placeholder="Task description" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;font-family:inherit" />
+    <input type="text" value="${d.owner||''}" placeholder="Owner" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;font-family:inherit" />
+    <input type="date" value="${d.eta||''}" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 6px;font-size:11px;font-family:inherit" />
+    <select style="padding:8px 6px;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+      <option ${d.status==='On Track'?'selected':''}>On Track</option>
+      <option ${d.status==='Completed'?'selected':''}>Completed</option>
+      <option ${d.status==='Delayed'?'selected':''}>Delayed</option>
+      <option ${d.status==='At Risk'?'selected':''}>At Risk</option>
+    </select>
+  </div>`;
+}
+
+function attrRow(a = {}, i = Date.now()) {
+  return `<div class="deliverable-row" id="ar-${i}" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr">
+    <input type="text" value="${a.name||''}" placeholder="Engineer name" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;font-family:inherit" />
+    <select style="padding:8px 6px;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+      <option ${a.informed==='Yes'?'selected':''}>Yes</option><option ${a.informed==='No'?'selected':''}>No</option>
+    </select>
+    <select style="padding:8px 6px;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+      <option ${a.billable==='Yes'?'selected':''}>Yes</option><option ${a.billable==='No'?'selected':''}>No</option>
+    </select>
+    <input type="text" value="${a.action||''}" placeholder="Action taken" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;font-family:inherit" />
+    <input type="text" value="${a.comments||''}" placeholder="Comments" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;font-family:inherit" />
+  </div>`;
+}
+
+function addDeliverableRow() {
+  const list = document.getElementById('deliverables-list');
+  const idx = Date.now();
+  list.insertAdjacentHTML('beforeend', delivRow({}, idx));
+}
+function addAttritionRow() {
+  const list = document.getElementById('attrition-list');
+  const idx = Date.now();
+  list.insertAdjacentHTML('beforeend', attrRow({}, idx));
+}
+
+function selectRAG(el) {
+  document.querySelectorAll('.rag-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('update-rag').value = el.dataset.val;
+  const block = document.getElementById('reason-block');
+  block.style.display = el.dataset.val !== 'Green' ? '' : 'none';
+}
+
+function submitUpdate(pid) {
+  const ragEl = document.getElementById('update-rag');
+  if (!ragEl) { showToast('Form error — please reload', 'danger'); return; }
+  const rag = ragEl.value;
+  if (!rag) { showToast('Please select a RAG status', 'danger'); return; }
+  const reasonEl = document.getElementById('update-reason');
+  const pathEl = document.getElementById('update-path');
+  const teamEl = document.getElementById('update-team-size');
+  const reason = (reasonEl && rag !== 'Green') ? reasonEl.value : '';
+  const path = (pathEl && rag !== 'Green') ? pathEl.value : '';
+  const team_size = teamEl ? teamEl.value : '';
+  const prevReport = (DB.reports[pid] || {})[currentWeek] || {};
+  if (!DB.reports[pid]) DB.reports[pid] = {};
+  DB.reports[pid][currentWeek] = {
+    rag,
+    prev: prevReport.prev || prevReport.rag || rag,
+    reason,
+    path,
+    team_size,
+    deliverables: prevReport.deliverables || [],
+    attrition: prevReport.attrition || []
+  };
+  showToast('Status saved successfully ✓', 'success');
+  setTimeout(() => showPanel('dashboard'), 800);
+}
+
+// ===================== PM HISTORY =====================
+function buildPMHistory() {
+  const myProjects = DB.projects.filter(p => p.pm === currentUser.id);
+  let rows = myProjects.map(p => {
+    const r = (DB.reports[p.id] || {})[currentWeek] || {};
+    return `<div class="history-entry">
+      <div><div class="history-date">Feb 10, 2026</div><div style="font-size:13px;font-weight:500;margin-top:4px">${p.name}</div></div>
+      <div>${ragBadge(r.rag || 'NA')}</div>
+      <div class="history-reason">${r.reason || '—'}</div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="panel-title">Status History</div>
+    <div class="panel-sub">Past updates for your projects</div>
+    <div class="card">
+      <div class="card-title">Week of Feb 10, 2026</div>
+      ${rows || '<p style="color:var(--text-muted);font-size:13px">No history yet.</p>'}
+    </div>`;
+}
+
+// ===================== EXEC DETAIL =====================
+let selectedProjectId = null;
+
+function gotoProjectDetail(pid) {
+  selectedProjectId = pid;
+  showPanel('exec-detail');
+  // sync select after panel HTML is rendered
+  const sel = document.querySelector('#main-content select');
+  if (sel) sel.value = pid;
+  renderProjectDetail();
+}
+
+function gotoPMUpdate(pid) {
+  showPanel('pm-update');
+  const sel = document.getElementById('update-project-select');
+  if (sel) { sel.value = pid; renderUpdateForm(pid); }
+}
+
+function selectProject(pid) {
+  selectedProjectId = pid;
+  renderProjectDetail();
+}
+function buildExecDetail() {
+  const projects = getWeekProjects();
+  const opts = projects.map(p => {
+    const ragLabel = p.rag === 'NA' ? '' : ` — ${p.rag}`;
+    return `<option value="${p.id}">${p.name}${ragLabel}</option>`;
+  }).join('');
+  return `
+    <div class="panel-title">Project Deep Dive</div>
+    <div class="panel-sub">Detailed view for any project</div>
+    <div class="form-group" style="max-width:400px;margin-bottom:20px">
+      <label>Select Project</label>
+      <select onchange="selectProject(this.value)">${opts}</select>
+    </div>
+    <div id="project-detail-body"></div>`;
+}
+function renderProjectDetail() {
+  const pid = selectedProjectId;
+  if (!pid) return;
+  const detailBody = document.getElementById('project-detail-body');
+  if (!detailBody) return;
+  const proj = DB.projects.find(p => p.id === pid);
+  if (!proj) return;
+  const r = (DB.reports[pid] || {})[currentWeek] || {};
+  const pm = DB.users.find(u => u.id === proj.pm);
+
+  function delivStatusBadge(status) {
+    const map = { 'Completed': 'Green', 'Delayed': 'Red', 'At Risk': 'Red', 'On Track': 'Green' };
+    const ragVal = map[status] || 'Amber';
+    return ragBadge(ragVal).replace(`>${ragVal}<`, `>${status}<`);
+  }
+
+  const delivRows = (r.deliverables || []).map(d => `
+    <tr>
+      <td>${d.type || '—'}</td>
+      <td>${d.task || '—'}</td>
+      <td>${d.owner || '—'}</td>
+      <td style="font-size:12px">${d.eta || '—'}</td>
+      <td>${delivStatusBadge(d.status || 'On Track')}</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text-muted);font-size:12px;padding:12px">No deliverables recorded.</td></tr>';
+
+  detailBody.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div>
+          <div style="font-size:20px;font-weight:600">${proj.name}</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:4px">${proj.client} · ${proj.type} · PM: ${pm ? pm.name : '—'}</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          ${ragBadge(r.prev || 'NA')} → ${ragBadge(r.rag || 'NA')}
+        </div>
+      </div>
+      ${r.reason ? `<div style="background:var(--red-bg);border:1px solid rgba(218,54,51,0.2);border-radius:8px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--red);margin-bottom:4px">Issue</div>
+        <div style="font-size:13px">${r.reason}</div>
+      </div>` : ''}
+      ${r.path ? `<div style="background:var(--green-bg);border:1px solid rgba(63,185,80,0.2);border-radius:8px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--green);margin-bottom:4px">Path to Green</div>
+        <div style="font-size:13px">${r.path}</div>
+      </div>` : ''}
+      <div class="card-title" style="margin-top:16px">Deliverables</div>
+      <table class="project-table">
+        <thead><tr><th>Type</th><th>Task</th><th>Owner</th><th>ETA</th><th>Status</th></tr></thead>
+        <tbody>${delivRows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ===================== ADMIN PANELS =====================
+function buildAdminPanel() {
+  const active = DB.projects.filter(p => !p.closed);
+  const closed = DB.projects.filter(p => p.closed);
+
+  function projectRow(p, isClosed) {
+    const pm = DB.users.find(u => u.id === p.pm);
+    return `<tr style="${isClosed ? 'opacity:0.5' : ''}">
+      <td><strong>${p.name}</strong></td>
+      <td>${p.client}</td>
+      <td>${pm ? pm.name : '—'}</td>
+      <td>${p.type}</td>
+      <td>
+        ${!isClosed
+          ? `<button class="btn btn-ghost btn-sm" onclick="openEditProject('${p.id}')">Edit / Reassign PM</button>
+             <button class="btn btn-danger btn-sm" style="margin-left:6px" onclick="closeProject('${p.id}')">Close</button>`
+          : `<span style="font-size:12px;color:var(--text-muted)">Closed</span>
+             <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="reopenProject('${p.id}')">Reopen</button>`
+        }
+      </td>
+    </tr>`;
+  }
+
+  const activeRows = active.map(p => projectRow(p, false)).join('');
+  const closedRows = closed.map(p => projectRow(p, true)).join('');
+
+  return `
+    <div class="panel-title">Manage Projects</div>
+    <div class="panel-sub">Add projects, reassign PMs, or close completed projects</div>
+    <div class="section-header">
+      <div></div>
+      <button class="btn btn-primary" onclick="openAddProject()">+ Add Project</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Active Projects (${active.length})</div>
+      <table class="project-table">
+        <thead><tr><th>Project</th><th>Client</th><th>Assigned PM</th><th>Type</th><th>Actions</th></tr></thead>
+        <tbody>${activeRows || '<tr><td colspan="5" style="color:var(--text-muted);font-size:13px;padding:12px">No active projects.</td></tr>'}</tbody>
+      </table>
+    </div>
+    ${closed.length > 0 ? `
+    <div class="card">
+      <div class="card-title" style="color:var(--text-muted)">Closed Projects (${closed.length})</div>
+      <table class="project-table">
+        <thead><tr><th>Project</th><th>Client</th><th>PM</th><th>Type</th><th>Actions</th></tr></thead>
+        <tbody>${closedRows}</tbody>
+      </table>
+    </div>` : ''}`;
+}
+
+function buildAdminUsers() {
+  function userCard(u, roleClass) {
+    const assignedProjects = DB.projects.filter(p => p.pm === u.id && !p.closed);
+    const projectNote = u.role === 'pm' && assignedProjects.length > 0
+      ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${assignedProjects.length} active project${assignedProjects.length > 1 ? 's' : ''}: ${assignedProjects.map(p => p.name).join(', ')}</div>`
+      : '';
+    const isSelf = u.id === currentUser.id;
+    return `
+    <div class="user-list-item">
+      <div>
+        <div class="name">${u.name} <span class="role-chip role-${roleClass}">${u.role === 'pm' ? 'PM' : u.role === 'exec' ? 'Exec' : 'Admin'}</span>${isSelf ? ' <span style="font-size:11px;color:var(--accent)">(you)</span>' : ''}</div>
+        <div class="email">${u.email}</div>
+        ${projectNote}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}')">Edit</button>
+        ${isSelf ? '' : `<button class="btn btn-danger btn-sm" onclick="removeUser('${u.id}')">Remove</button>`}
+      </div>
+    </div>`;
+  }
+
+  const pms    = DB.users.filter(u => u.role === 'pm');
+  const execs  = DB.users.filter(u => u.role === 'exec');
+  const admins = DB.users.filter(u => u.role === 'admin');
+
+  const pmList    = pms.map(u    => userCard(u, 'pm')).join('');
+  const execList  = execs.map(u  => userCard(u, 'exec')).join('');
+  const adminList = admins.map(u => userCard(u, 'admin')).join('');
+
+  return `
+    <div class="panel-title">Users & Access</div>
+    <div class="panel-sub">Add or remove Project Managers, Executives, and Admins</div>
+
+    <div class="card">
+      <div class="section-header" style="margin-bottom:12px">
+        <div class="card-title" style="margin:0">👤 Project Managers</div>
+        <button class="btn btn-primary btn-sm" onclick="openAddUser('pm')">+ Add PM</button>
+      </div>
+      ${pmList || '<p style="color:var(--text-muted);font-size:13px;padding:4px 0">No PMs yet.</p>'}
+    </div>
+
+    <div class="card">
+      <div class="section-header" style="margin-bottom:12px">
+        <div class="card-title" style="margin:0">👔 Executives</div>
+        <button class="btn btn-primary btn-sm" onclick="openAddUser('exec')">+ Add Executive</button>
+      </div>
+      ${execList || '<p style="color:var(--text-muted);font-size:13px;padding:4px 0">No executives yet.</p>'}
+    </div>
+
+    <div class="card">
+      <div class="section-header" style="margin-bottom:12px">
+        <div class="card-title" style="margin:0">🔧 Admins</div>
+        <button class="btn btn-primary btn-sm" onclick="openAddUser('admin')">+ Add Admin</button>
+      </div>
+      ${adminList || '<p style="color:var(--text-muted);font-size:13px;padding:4px 0">No admins yet.</p>'}
+    </div>`;
+}
+
+function buildAdminComms() {
+  const emailList = DB.execEmails.map((e,i) => `
+    <div class="user-list-item" id="exec-email-${i}">
+      <div style="font-size:13px">${e}</div>
+      <button class="btn btn-danger btn-sm" onclick="removeExecEmail(${i})">Remove</button>
+    </div>`).join('');
+
+  return `
+    <div class="panel-title">Communications</div>
+    <div class="panel-sub">Manage automated reminders and dashboard distribution</div>
+    <div class="card">
+      <div class="card-title">📬 Dashboard Email Recipients</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">These addresses receive the weekly RAG dashboard email.</p>
+      ${emailList}
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <input type="email" id="new-exec-email" placeholder="Add email address..." style="flex:1;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px" />
+        <button class="btn btn-primary" onclick="addExecEmail()">Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔔 PM Reminder Schedule</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Automated reminders are sent every <strong style="color:var(--text)">Friday at 9:00 AM</strong> to all PMs with pending updates.</div>
+      <div style="background:var(--green-bg);border:1px solid rgba(63,185,80,0.2);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--green)">
+        ✓ Reminder schedule is active
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📤 Send Dashboard Now</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Preview and send the current week's dashboard to all executive recipients.</p>
+      <button class="btn btn-primary" onclick="previewEmail()">Preview & Send Dashboard</button>
+    </div>`;
+}
+
+// ===================== PANEL BUILDER =====================
+function buildPanel(id) {
+  switch(id) {
+    case 'dashboard': return buildDashboard();
+    case 'pm-update': return buildPMUpdate();
+    case 'pm-history': return buildPMHistory();
+    case 'exec-detail': return buildExecDetail();
+    case 'admin-panel': return buildAdminPanel();
+    case 'admin-users': return buildAdminUsers();
+    case 'admin-comms': return buildAdminComms();
+    default: return buildDashboard();
+  }
+}
+function afterPanelBuild(id) {
+  if (id === 'exec-detail') {
+    const first = getWeekProjects()[0];
+    if (first) {
+      selectedProjectId = first.id;
+      // Sync the select dropdown value
+      const sel = document.querySelector('#main-content select');
+      if (sel) sel.value = first.id;
+      renderProjectDetail();
+    }
+  }
+}
+
+// ===================== MODAL ACTIONS =====================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openAddProject() {
+  editingProjectId = null;
+  document.getElementById('modal-project-title').textContent = 'Add Project';
+  document.getElementById('mp-name').value = '';
+  document.getElementById('mp-client').value = '';
+  const pmSel = document.getElementById('mp-pm');
+  pmSel.innerHTML = DB.users.filter(u => u.role === 'pm').map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+  openModal('modal-project');
+}
+
+function openEditProject(pid) {
+  editingProjectId = pid;
+  const p = DB.projects.find(x => x.id === pid);
+  document.getElementById('modal-project-title').textContent = 'Edit Project';
+  document.getElementById('mp-name').value = p.name;
+  document.getElementById('mp-client').value = p.client;
+  document.getElementById('mp-type').value = p.type;
+  const pmSel = document.getElementById('mp-pm');
+  pmSel.innerHTML = DB.users.filter(u => u.role === 'pm').map(u => `<option value="${u.id}" ${u.id===p.pm?'selected':''}>${u.name}</option>`).join('');
+  openModal('modal-project');
+}
+
+function closeProject(pid) {
+  if (!confirm('Close this project? PMs will no longer be able to update it.')) return;
+  const p = DB.projects.find(x => x.id === pid);
+  if (p) p.closed = true;
+  showToast('Project closed', 'info');
+  showPanel('admin-panel');
+}
+
+function reopenProject(pid) {
+  const p = DB.projects.find(x => x.id === pid);
+  if (p) p.closed = false;
+  showToast('Project reopened ✓', 'success');
+  showPanel('admin-panel');
+}
+
+function saveProject() {
+  const name = document.getElementById('mp-name').value.trim();
+  const pm = document.getElementById('mp-pm').value;
+  const client = document.getElementById('mp-client').value.trim();
+  const type = document.getElementById('mp-type').value;
+  if (!name || !pm) { showToast('Project name and PM are required', 'danger'); return; }
+  if (editingProjectId) {
+    const p = DB.projects.find(x => x.id === editingProjectId);
+    p.name = name; p.pm = pm; p.client = client; p.type = type;
+    showToast('Project updated ✓', 'success');
+  } else {
+    DB.projects.push({ id:'p' + Date.now(), name, pm, client, type });
+    showToast('Project added ✓', 'success');
+  }
+  closeModal('modal-project');
+  showPanel('admin-panel');
+}
+
+function openAddUser(defaultRole) {
+  editingUserId = null;
+  const roleLabels = { pm: 'Project Manager', exec: 'Executive', admin: 'Admin' };
+  document.getElementById('modal-user-title').textContent = `Add ${roleLabels[defaultRole] || 'User'}`;
+  ['mu-name','mu-email','mu-pass'].forEach(id => document.getElementById(id).value = '');
+  const roleEl = document.getElementById('mu-role');
+  roleEl.value = defaultRole || 'pm';
+  document.getElementById('mu-pass-hint').style.display = 'none';
+  openModal('modal-user');
+}
+function openEditUser(uid) {
+  editingUserId = uid;
+  const u = DB.users.find(x => x.id === uid);
+  const roleLabels = { pm: 'Project Manager', exec: 'Executive', admin: 'Admin' };
+  document.getElementById('modal-user-title').textContent = `Edit ${roleLabels[u.role] || 'User'}`;
+  document.getElementById('mu-name').value = u.name;
+  document.getElementById('mu-email').value = u.email;
+  document.getElementById('mu-pass').value = '';
+  document.getElementById('mu-role').value = u.role;
+  document.getElementById('mu-pass-hint').style.display = '';
+  openModal('modal-user');
+}
+function saveUser() {
+  const name  = document.getElementById('mu-name').value.trim();
+  const email = document.getElementById('mu-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('mu-pass').value;
+  const role  = document.getElementById('mu-role').value;
+  if (!name || !email) { showToast('Name and email are required', 'danger'); return; }
+  if (!pass && !editingUserId) { showToast('Password is required for new users', 'danger'); return; }
+
+  // Check for duplicate email
+  const duplicate = DB.users.find(u => u.email === email && u.id !== editingUserId);
+  if (duplicate) { showToast('An account with that email already exists', 'danger'); return; }
+
+  const roleLabels = { pm: 'Project Manager', exec: 'Executive', admin: 'Admin' };
+  if (editingUserId) {
+    const u = DB.users.find(x => x.id === editingUserId);
+    u.name = name; u.email = email; if (pass) u.pass = pass; u.role = role;
+    showToast(`${roleLabels[role]} updated ✓`, 'success');
+  } else {
+    DB.users.push({ id: 'u' + Date.now(), name, email, pass, role });
+    showToast(`${roleLabels[role]} added ✓`, 'success');
+  }
+  closeModal('modal-user');
+  showPanel('admin-users');
+}
+function removeUser(uid) {
+  const u = DB.users.find(x => x.id === uid);
+  if (!u) return;
+  if (u.id === currentUser.id) { showToast("You can't remove your own account", 'danger'); return; }
+
+  // Warn if PM has active projects
+  if (u.role === 'pm') {
+    const activeProjects = DB.projects.filter(p => p.pm === uid && !p.closed);
+    if (activeProjects.length > 0) {
+      const names = activeProjects.map(p => p.name).join(', ');
+      if (!confirm(`${u.name} is assigned to ${activeProjects.length} active project(s): ${names}.\n\nThese projects will have no PM assigned. Remove anyway?`)) return;
+      // Unassign PM from those projects
+      activeProjects.forEach(p => p.pm = null);
+    } else {
+      if (!confirm(`Remove ${u.name}?`)) return;
+    }
+  } else {
+    if (!confirm(`Remove ${u.name}?`)) return;
+  }
+
+  const idx = DB.users.findIndex(x => x.id === uid);
+  if (idx !== -1) DB.users.splice(idx, 1);
+  showToast(`${u.name} removed`, 'info');
+  showPanel('admin-users');
+}
+
+function addExecEmail() {
+  const input = document.getElementById('new-exec-email');
+  const email = input.value.trim();
+  if (!email || !email.includes('@')) { showToast('Enter a valid email', 'danger'); return; }
+  if (DB.execEmails.includes(email)) { showToast('Email already in list', 'info'); return; }
+  DB.execEmails.push(email);
+  input.value = '';
+  showToast('Email added ✓', 'success');
+  showPanel('admin-comms');
+}
+function removeExecEmail(i) {
+  DB.execEmails.splice(i, 1);
+  showPanel('admin-comms');
+}
+
+function previewEmail() {
+  const projects = getWeekProjects();
+  const reds = projects.filter(p => p.rag==='Red');
+  const ambs = projects.filter(p => p.rag==='Amber');
+  const grns = projects.filter(p => p.rag==='Green');
+  const all = [...reds, ...ambs, ...grns];
+  const rows = all.map(p => `
+    <div class="email-project-row">
+      <span class="dot dot-${p.rag}"></span>
+      <strong style="min-width:200px">${p.name}</strong>
+      <span style="color:#666;font-size:12px;margin-right:12px">${p.pmName}</span>
+      <span style="font-size:12px;color:#444;flex:1">${p.reason||'On track'}</span>
+    </div>`).join('');
+  document.getElementById('email-preview-body').innerHTML = `
+    <div class="email-preview">
+      <h2>📊 Weekly RAG Dashboard — Feb 10, 2026</h2>
+      <div style="display:flex;gap:20px;margin-bottom:16px">
+        <span style="color:#da3633;font-weight:600">🔴 ${reds.length} Red</span>
+        <span style="color:#d29922;font-weight:600">🟡 ${ambs.length} Amber</span>
+        <span style="color:#3fb950;font-weight:600">🟢 ${grns.length} Green</span>
+      </div>
+      ${rows}
+      <p style="font-size:11px;color:#999;margin-top:16px">Sent from RAG Tracker · ${DB.execEmails.join(', ')}</p>
+    </div>`;
+  openModal('modal-email-preview');
+}
+
+function sendDashboard() {
+  closeModal('modal-email-preview');
+  showToast(`Dashboard sent to ${DB.execEmails.length} recipient(s) ✓`, 'success');
+}
+
+// ===================== TOAST =====================
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Click outside modal to close
+document.addEventListener('click', function(e) {
+  document.querySelectorAll('.modal-overlay.open').forEach(overlay => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>

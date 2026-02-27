@@ -1,0 +1,12 @@
+node_modules/
+.env
+*.env.local
+dist/
+backend/public/
+.DS_Store
+*.log
+certs/
+*.txt
+*.pdf
+*.docx
+*.xlsm

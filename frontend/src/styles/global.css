@@ -1,0 +1,267 @@
+/* Fixed the color code problem in the calendar icon by adding `color-scheme: dark` to the root CSS. Also added a new block for Light Mode with appropriate color variables. */
+
+:root {
+  color-scheme: dark; /* This fixes the black calendar icon! */
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #7d8590;
+  --accent: #f0b429;
+  --red: #da3633;
+  --amber: #d29922;
+  --green: #3fb950;
+  --red-bg: rgba(218,54,51,0.12);
+  --amber-bg: rgba(210,153,34,0.12);
+  --green-bg: rgba(63,185,80,0.12);
+  --blue: #58a6ff;
+}
+
+/* Add this new block for Light Mode */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --surface2: #f3f4f6;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --text-muted: #656d76;
+  --accent: #d4a017; /* Slightly darker for better contrast on white */
+  --red: #cf222e;
+  --amber: #9a6700;
+  --green: #1a7f37;
+  --red-bg: rgba(207,34,46,0.12);
+  --amber-bg: rgba(154,103,0,0.12);
+  --green-bg: rgba(26,127,55,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────────────── */
+.app-layout  { display: flex; height: calc(100vh - 56px); }
+.main-content { flex: 1; overflow-y: auto; padding: 32px; }
+
+/* ── Topbar ─────────────────────────────────────── */
+.topbar {
+  height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 24px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--accent); margin-right: auto; }
+.user-badge  { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--surface2); border-radius: 20px; font-size: 13px; }
+
+/* ── Sidebar ─────────────────────────────────────── */
+.sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; flex-shrink: 0; }
+.nav-section { padding: 16px 20px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+  color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.15s;
+  border-left: 3px solid transparent; text-decoration: none;
+}
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--text); background: var(--surface2); border-left-color: var(--accent); }
+.badge-count { background: var(--red); color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; margin-left: auto; }
+
+/* ── Role chips ─────────────────────────────────── */
+.role-chip { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; padding: 2px 7px; border-radius: 10px; }
+.role-admin { background: rgba(240,180,41,0.2);  color: var(--accent); }
+.role-pm    { background: rgba(88,166,255,0.2);  color: var(--blue); }
+.role-exec  { background: rgba(63,185,80,0.2);   color: var(--green); }
+
+/* ── Buttons ─────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+  border-radius: 8px; border: none; cursor: pointer; font-family: inherit;
+  font-size: 14px; font-weight: 500; transition: all 0.2s; text-decoration: none;
+}
+.btn-primary { background: var(--accent); color: #0d1117; }
+.btn-primary:hover { background: #f5c73e; }
+.btn-ghost   { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-danger  { background: var(--red-bg); color: var(--red); border: 1px solid rgba(218,54,51,0.3); }
+.btn-danger:hover  { background: rgba(218,54,51,0.2); }
+.btn-sm      { padding: 6px 12px; font-size: 12px; }
+.btn-full    { width: 100%; justify-content: center; }
+
+/* ── Cards ───────────────────────────────────────── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.panel-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 6px; }
+.panel-sub   { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+/* ── Stats row ───────────────────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card  { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.stat-value { font-size: 32px; font-weight: 600; line-height: 1; }
+.stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.stat-red   .stat-value { color: var(--red); }
+.stat-amber .stat-value { color: var(--amber); }
+.stat-green .stat-value { color: var(--green); }
+
+/* ── Table ───────────────────────────────────────── */
+.project-table { width: 100%; border-collapse: collapse; }
+.project-table th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.project-table td { padding: 12px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.project-table tr:last-child td { border-bottom: none; }
+.project-table tr:hover td { background: var(--surface2); }
+
+/* ── RAG badges ──────────────────────────────────── */
+.rag-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.rag-Red   { background: var(--red-bg);   color: var(--red);   }
+.rag-Amber { background: var(--amber-bg); color: var(--amber); }
+.rag-Green { background: var(--green-bg); color: var(--green); }
+.rag-NA    { background: var(--surface2); color: var(--text-muted); }
+.rag-dot   { width: 7px; height: 7px; border-radius: 50%; }
+.rag-Red   .rag-dot { background: var(--red); }
+.rag-Amber .rag-dot { background: var(--amber); }
+.rag-Green .rag-dot { background: var(--green); }
+
+/* ── RAG selector ────────────────────────────────── */
+.rag-selector { display: flex; gap: 8px; }
+.rag-option { flex:1; padding:10px; border-radius:8px; cursor:pointer; text-align:center; font-size:13px; font-weight:600; border:2px solid transparent; transition:all 0.15s; }
+.rag-option[data-val="Red"]   { background: var(--red-bg);   color: var(--red);   }
+.rag-option[data-val="Red"].selected   { border-color: var(--red);   }
+.rag-option[data-val="Amber"] { background: var(--amber-bg); color: var(--amber); }
+.rag-option[data-val="Amber"].selected { border-color: var(--amber); }
+.rag-option[data-val="Green"] { background: var(--green-bg); color: var(--green); }
+.rag-option[data-val="Green"].selected { border-color: var(--green); }
+
+/* ── Forms ───────────────────────────────────────── */
+.form-group { margin-bottom: 18px; }
+.form-group label { display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:6px; }
+.form-group input, .form-group select, .form-group textarea {
+  width:100%; padding:10px 14px; background:var(--bg); border:1px solid var(--border);
+  border-radius:8px; color:var(--text); font-family:inherit; font-size:14px; transition:border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--accent); }
+.form-group textarea { resize:vertical; min-height:80px; }
+.two-col   { display:grid; grid-template-columns:1fr 1fr;     gap:16px; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+select option { background: var(--bg); }
+
+/* ── Auth screen ─────────────────────────────────── */
+.auth-screen {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 20% 50%, rgba(240,180,41,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(88,166,255,0.06) 0%, transparent 50%),
+              var(--bg);
+}
+.auth-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:48px; width:420px; box-shadow:0 24px 48px rgba(0,0,0,0.4); }
+.auth-logo { font-family:'DM Serif Display',serif; font-size:28px; color:var(--accent); margin-bottom:8px; letter-spacing:-0.5px; }
+.auth-subtitle { color:var(--text-muted); font-size:14px; margin-bottom:36px; }
+.error-msg  { color:var(--red); font-size:12px; margin-top:8px; }
+.auth-demo  { margin-top:24px; padding-top:24px; border-top:1px solid var(--border); }
+.auth-demo p { font-size:12px; color:var(--text-muted); margin-bottom:10px; }
+.demo-user-btn { display:block; width:100%; margin-bottom:8px; padding:8px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:inherit; font-size:12px; cursor:pointer; text-align:left; transition:border-color 0.2s; }
+.demo-user-btn:hover { border-color:var(--accent); }
+.demo-user-btn span  { color:var(--text-muted); margin-left:6px; }
+
+/* ── Modal ───────────────────────────────────────── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; display:flex; align-items:center; justify-content:center; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px; width:480px; max-width:90vw; box-shadow:0 32px 64px rgba(0,0,0,0.5); }
+.modal-wide { width:620px; }
+.modal-title { font-family:'DM Serif Display',serif; font-size:20px; margin-bottom:20px; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+
+/* ── History / Timeline ──────────────────────────── */
+.history-bar { display:flex; gap:3px; align-items:flex-end; height:48px; }
+.h-bar { width:14px; border-radius:3px 3px 0 0; cursor:pointer; transition:opacity 0.15s; }
+.h-bar:hover { opacity:0.8; }
+.h-bar-Red   { background:var(--red); }
+.h-bar-Amber { background:var(--amber); }
+.h-bar-Green { background:var(--green); }
+.h-bar-NA    { background:var(--surface2); }
+
+.timeline-row { display:grid; grid-template-columns:180px repeat(26,1fr); gap:2px; align-items:center; margin-bottom:4px; font-size:11px; }
+.timeline-cell { height:22px; border-radius:3px; cursor:pointer; }
+.timeline-cell:hover { opacity:0.75; }
+
+/* ── Reminder card ───────────────────────────────── */
+.reminder-card { background:rgba(240,180,41,0.08); border:1px solid rgba(240,180,41,0.25); border-radius:10px; padding:16px 20px; display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+
+/* ── User list ───────────────────────────────────── */
+.user-list-item { display:flex; align-items:flex-start; justify-content:space-between; padding:12px 16px; background:var(--surface2); border-radius:8px; margin-bottom:8px; gap:12px; }
+.user-list-item .name  { font-size:14px; font-weight:500; }
+.user-list-item .email { font-size:12px; color:var(--text-muted); }
+
+/* ── Toast ───────────────────────────────────────── */
+.toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 20px; font-size:13px; z-index:300; pointer-events:none; }
+.toast-success { border-color:var(--green); }
+.toast-danger  { border-color:var(--red); }
+.toast-info    { border-color:var(--blue); }
+
+/* ── Loading ─────────────────────────────────────── */
+.spinner { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-center { display:flex; align-items:center; justify-content:center; padding:40px; gap:12px; color:var(--text-muted); font-size:13px; }
+
+/* ── Deliverables inline table ───────────────────── */
+.deliverable-row { display:grid; grid-template-columns:1fr 2fr 1fr 1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px; }
+.deliverable-row input, .deliverable-row select { padding:8px 10px; font-size:12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:inherit; }
+.add-row-btn { font-size:12px; color:var(--blue); cursor:pointer; background:none; border:none; padding:4px 0; font-family:inherit; }
+.add-row-btn:hover { text-decoration:underline; }
+
+/* Mobile Menu Button and changes to the mediaquery*/
+.mobile-menu-btn {
+  display: none;
+  background: none; border: none; font-size: 24px; color: var(--text); 
+  cursor: pointer; padding-right: 12px;
+}
+
+@media (max-width:768px) {
+  .mobile-menu-btn { display: block; }
+  .topbar-logo { font-size: 16px; }
+  
+  /* Hide the user's name on mobile to save space, but keep the role chip */
+  .user-badge span:first-child { display: none; } 
+
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .two-col, .three-col { grid-template-columns: 1fr; }
+  .main-content { padding: 16px; }
+
+  /* Slide-in Mobile Sidebar */
+  .sidebar {
+    display: block !important;
+    position: fixed;
+    top: 56px;
+    left: -260px; /* Hide off-screen by default */
+    bottom: 0;
+    width: 240px;
+    z-index: 200;
+    transition: left 0.3s ease;
+    background: var(--surface);
+    box-shadow: none;
+  }
+  .sidebar.open {
+    left: 0; /* Slide in */
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  }
+
+  /* Fix the "shaggy" form rows by stacking them */
+  .desktop-headers { display: none !important; }
+  
+  .deliverable-row, .dynamic-row {
+    grid-template-columns: 1fr !important;
+    background: var(--surface2);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px !important;
+    gap: 12px !important;
+  }
+  
+  /* Make the red 'X' delete buttons full width on mobile */
+  .deliverable-row button, .dynamic-row button {
+    width: 100%;
+    margin-top: 4px;
+  }
+}
