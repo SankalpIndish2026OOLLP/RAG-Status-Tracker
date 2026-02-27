@@ -27,6 +27,12 @@ export default function PMUpdatePage() {
   const [actualTeamSize, setActualTeamSize] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null); // Tracks which item to delete
 
+  // ADD THESE NEW STATES:
+  const [billingCount, setBillingCount] = useState(0);
+  const [currentBillableCount, setCurrentBillableCount] = useState(0);
+  const [buffer, setBuffer] = useState(0);
+  const [ragScore, setRagScore] = useState(100);
+
   // Load projects
   useEffect(() => {
     projectsApi.list()
@@ -52,16 +58,55 @@ export default function PMUpdatePage() {
           setTeamSize(thisWeek.teamSize || '');
           setPlannedTeamSize(thisWeek.plannedTeamSize || thisWeek.teamSize || ''); // Fallback to legacy teamSize
           setActualTeamSize(thisWeek.actualTeamSize || '');
+
+          // ADD THESE LINES: [calculations for RAG score]
+          setBillingCount(thisWeek.billingCount || 0);
+          setCurrentBillableCount(thisWeek.currentBillableCount || 0);
+          setBuffer(thisWeek.buffer || 0);
+
           setDeliverables(thisWeek.deliverables || []);
           setAttrition(thisWeek.attrition || []);
           setEscalations(thisWeek.escalations || []); // Add this line
         } else {
           setExisting(null);
-          setRag(''); setReason(''); setPath(''); setTeamSize('');
+          setRag(''); setReason(''); setPath(''); setTeamSize(''); setPlannedTeamSize(''); setActualTeamSize('');
+          // RESET THESE NEW STATES:
+          setBillingCount(0); setCurrentBillableCount(0); setBuffer(0);
           setDeliverables([]); setAttrition([]); setEscalations([]); // Add this line
         }
       });
   }, [selectedId]);
+
+  // Auto-calculate RAG Status
+  useEffect(() => {
+    if (!selectedId) return;
+
+    // 1. Team Composition: If Billing Count == Current Billable -> 100, else 50
+    const teamScore = (Number(billingCount) === Number(currentBillableCount) && Number(billingCount) > 0) ? 100 : 50;
+
+    // 2. Attrition: If no attrition -> 100, else 50
+    const attScore = attrition.length === 0 ? 100 : 50;
+
+    // 3. Customer Escalation: None -> 100, Low/Medium -> 80, Critical/Major -> 50
+    let escScore = 100;
+    if (escalations.length > 0) {
+      const hasCritical = escalations.some(e => e.severity === 'Critical' || e.severity === 'Major');
+      escScore = hasCritical ? 50 : 80;
+    }
+
+    // 4. Deliverables: No delayed tasks -> 100, else 50
+    const delScore = deliverables.some(d => d.status === 'Delayed') ? 50 : 100;
+
+    // Calculate Average
+    const avgScore = (teamScore + attScore + escScore + delScore) / 4;
+    setRagScore(avgScore);
+
+    // Set Status Category
+    if (avgScore >= 80) setRag('Green');
+    else if (avgScore >= 60) setRag('Amber');
+    else setRag('Red');
+
+  }, [billingCount, currentBillableCount, attrition, escalations, deliverables, selectedId]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -71,7 +116,15 @@ export default function PMUpdatePage() {
       await reportsApi.submit({
         projectId: selectedId,
         rag, reasonForRag: reason, pathToGreen: path,
-        teamSize, plannedTeamSize, actualTeamSize, deliverables, attrition, escalations // Include escalations in the payload and also olanned and actual team size
+        teamSize, plannedTeamSize, actualTeamSize, 
+
+        // ADD THE BILLING METRICS HERE:
+        billingCount: Number(billingCount),
+        currentBillableCount: Number(currentBillableCount),
+        yetToBill: Math.max(0, Number(billingCount) - Number(currentBillableCount)),
+        buffer: Number(buffer),
+        
+        deliverables, attrition, escalations // Include escalations in the payload and also olanned and actual team size
       });
       toast('Status saved ✓', 'success');
       setTimeout(() => navigate('/dashboard'), 700);
@@ -153,14 +206,17 @@ export default function PMUpdatePage() {
 
             {/* RAG selector */}
             <div className="form-group">
-              <label>RAG Status — This Week</label>
+              <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>RAG Status — This Week</span>
+                <span style={{ color: 'var(--accent)' }}>Calculated Score: {ragScore}%</span>
+              </label>
               <div className="rag-selector">
                 {['Red', 'Amber', 'Green'].map(r => (
                   <div
                     key={r}
                     className={`rag-option ${rag === r ? 'selected' : ''}`}
                     data-val={r}
-                    onClick={() => setRag(r)}
+                    style={{ pointerEvents: 'none', opacity: rag === r ? 1 : 0.4 }} // Disabled manual click
                   >{r}</div>
                 ))}
               </div>
@@ -191,6 +247,27 @@ export default function PMUpdatePage() {
               <input type="text" value={actualTeamSize} onChange={e => setActualTeamSize(e.target.value)} placeholder="e.g. 1 Dev + 1 QA" />
             </div>
           </div>
+
+          {/* Adding the new billing metrics fields in a grid layout for better organization and clarity. The "Yet to Bill" field is auto-calculated and disabled to prevent manual input, ensuring data consistency. */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16, marginBottom: 18 }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Billing Count (SOW)</label>
+                <input type="number" min="0" value={billingCount} onChange={e => setBillingCount(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Current Billable</label>
+                <input type="number" min="0" value={currentBillableCount} onChange={e => setCurrentBillableCount(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Yet to Bill</label>
+                {/* Auto-calculated difference field */}
+                <input type="number" value={Math.max(0, Number(billingCount) - Number(currentBillableCount))} disabled style={{ background: 'var(--surface2)', cursor: 'not-allowed' }} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Buffer / Unbilled</label>
+                <input type="number" min="0" value={buffer} onChange={e => setBuffer(e.target.value)} />
+              </div>
+            </div>
 
             {/* Deliverables */}
             <div className="form-group">
